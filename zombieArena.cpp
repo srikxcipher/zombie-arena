@@ -1,6 +1,7 @@
 #include<iostream>
 #include<SFML/Graphics.hpp>
 #include "player.cpp"
+#include "zombie_class.cpp"
 
 using namespace sf;
 using namespace std;
@@ -14,7 +15,22 @@ int main()
     Texture textureBackground;
     textureBackground.loadFromFile("res/graphics/background_sheet.png");
     
+    
+    
+    Texture textureCrossHair;
+    textureCrossHair.loadFromFile("res/graphics/crosshair.png");
+    
+    Sprite spriteCrossHair;
+    spriteCrossHair.setTexture(textureCrossHair);
+    spriteCrossHair.setOrigin(25,25);
+    
     int wave = 0;
+    
+    //Screen
+    Vector2i mouseScreenPosition;
+    //Game - Arena
+    Vector2f mouseWorldPosition;
+    
     
     VertexArray background;
     //background.resize(10*10*4);
@@ -24,19 +40,26 @@ int main()
     enum class State{GAME_OVER, LEVELING_UP, PAUSED, PLAYING};
     State state = State::GAME_OVER; // Initial State
     
+    
     IntRect arena;
-     
+    
+    
     int tilesize = createBackground(background, arena);
     
     Clock clock;
     
-    // Setting View
+    
+    // Setting View - Camera
     
     View mainView(FloatRect(0,0,resolution.x,resolution.y));
     
-  
+    
     // Creating Player
     Player player;
+    
+    // Creating Zombies
+    Zombie z1,z2,z3;
+    
     
     
     //Setting 4 screen pos.
@@ -62,8 +85,12 @@ int main()
     //background[6].texCoords = Vector2f(50,100);
     //background[7].texCoords = Vector2f(0,100);
     
+
+    
     cout<<resolution.x<<" "<<resolution.y<<endl;
     RenderWindow window(VideoMode(resolution.x,resolution.y),"~~~ZOMBIE-ARENA~~~");
+    
+    
     
     //Main Game-Loop
     while(window.isOpen()){
@@ -90,6 +117,36 @@ int main()
             }
         } // Event loop close
         
+        // Handle play using WASD keys while playing
+        if(state==State::PLAYING){
+            if(Keyboard::isKeyPressed(Keyboard::W)){
+                player.moveUp();
+            }
+            else{
+                player.stopUp();
+            }
+            
+            if(Keyboard::isKeyPressed(Keyboard::A)){
+                player.moveLeft();
+            }
+            else{
+                player.stopLeft();
+            }
+            
+            if(Keyboard::isKeyPressed(Keyboard::S)){
+                player.moveDown();
+            }
+            else{
+                player.stopDown();
+            }
+            
+            if(Keyboard::isKeyPressed(Keyboard::D)){
+                player.moveRight();
+            }
+            else{
+                player.stopRight();
+            }
+        }
         //State -> LEVELING_UP
         
         if(state==State::LEVELING_UP){ //Handle Leveling Up state
@@ -119,16 +176,31 @@ int main()
                 arena.top=0;
                 int tileSize = createBackground(background, arena);
                 player.spawn(arena, resolution, tileSize);
+                z1.spawn(100,0,0,10);
+                z2.spawn(0,100,1,3);
+                z3.spawn(500,100,2,10);
             }
- 
+            
+        
         } // End of Leveling Up
         
         //$------------------------------Update Frame------------------------------$//
         
         if(state==State::PLAYING){
-                
-            }
-         
+           
+           Time dt = clock.restart();
+           float dtAsSeconds = dt.asSeconds();
+           mouseScreenPosition = Mouse::getPosition();
+           mouseWorldPosition=window.mapPixelToCoords(Mouse::getPosition(),mainView);
+           player.update(dtAsSeconds,mouseScreenPosition);
+           spriteCrossHair.setPosition(mouseWorldPosition);
+           mainView.setCenter(player.getCenter());
+           //mainView.setCenter(Vector2f(arena.width/2,arena.height/2)); //Set Arena to Center  
+        }
+        
+        
+        
+        
         // Handle players exit
         if(Keyboard::isKeyPressed(Keyboard::Escape))
         {
@@ -136,13 +208,18 @@ int main()
         } //End of Escape        
         
         
+        
         //$------------------------------Update Scene------------------------------$//
         if(state==State::PLAYING){
               window.clear();
               window.setView(mainView);
-              mainView.setCenter(Vector2f(arena.width/2,arena.height/2)); //Set Arena to Center
+              window.setMouseCursorVisible(false);
               window.draw(background,&textureBackground);
-              window.draw(player.getSprite());   
+              window.draw(player.getSprite()); 
+              window.draw(z1.getSprite());
+              window.draw(z2.getSprite());
+              window.draw(z3.getSprite());
+              window.draw(spriteCrossHair);  
             }
         if(state==State::GAME_OVER){
                 //code 
@@ -162,8 +239,9 @@ int main()
     }// End of game loop    
     return 0;
   }
-
-
+  
+  
+  
   int createBackground(VertexArray& rVA, IntRect arena){ //rVA -> alias - original arr-> background  || First param -> reference
     const int TILE_SIZE=50;
     const int TILE_TYPE=3;
