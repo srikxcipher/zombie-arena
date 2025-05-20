@@ -17,7 +17,7 @@ class Zombie{
         Sprite m_Sprite;
         float m_Speed;
         float m_Health;
-        bool m_Alive;
+        bool m_Alive = false;
         
         
    public:
@@ -37,18 +37,21 @@ class Zombie{
                m_Sprite.setTexture(m_Texture);
                m_Speed = BLOATER_SPEED;
                m_Health = BLOATER_HEALTH;
+               m_Alive = true;
                break;
             case 1: // CHASER
                m_Texture.loadFromFile("res/graphics/chaser.png");
                m_Sprite.setTexture(m_Texture);
                m_Speed = CHASER_SPEED;
                m_Health = CHASER_HEALTH;
+               m_Alive = true;
                break;
             case 2: // CRAWLER
                m_Texture.loadFromFile("res/graphics/crawler.png");
                m_Sprite.setTexture(m_Texture);
                m_Speed = CRAWLER_SPEED;
                m_Health = CRAWLER_HEALTH;
+               m_Alive = true;
                break;
         } //Case closed
         
@@ -76,7 +79,43 @@ class Zombie{
        return m_Sprite;
   }
   
+  bool Zombie::isAlive(){
+       return m_Alive;
+  }
   
+  void Zombie::update(float elapsedTime, Vector2f playerLocation){
+ //if(m_Alive){
+    float playerX = playerLocation.x;
+    float playerY = playerLocation.y;
+    if(m_Position.x<playerX){
+       m_Position.x=m_Position.x+m_Speed*elapsedTime;
+    }
+    if(m_Position.x>playerX){
+       m_Position.x=m_Position.x-m_Speed*elapsedTime;
+    }
+    if(m_Position.y<playerY){
+       m_Position.y=m_Position.y+m_Speed*elapsedTime;
+    }
+    if(m_Position.y>playerY){
+       m_Position.y=m_Position.y-m_Speed*elapsedTime;
+    }
+    
+    m_Sprite.setPosition(m_Position);
+    float angle = (atan2(playerY-m_Position.y,playerX-m_Position.x)*180)/3.141;
+    m_Sprite.setRotation(angle);
+    //}
+ }
+ 
+  bool Zombie::hit(){
+      m_Health--;
+      if(m_Health<0){
+         m_Alive = false;
+         m_Texture.loadFromFile("res/graphics/blood.png");
+         m_Sprite.setTexture(m_Texture);
+         return true;
+      }   
+      return false;
+  }
   
   
 

@@ -5,7 +5,10 @@
 
 using namespace sf;
 using namespace std;
+
 int createBackground(VertexArray& rVA, IntRect arena);
+Zombie *createHorde(int numZombies, IntRect arena);
+
 int main()
 {
     Vector2f resolution;
@@ -58,7 +61,13 @@ int main()
     Player player;
     
     // Creating Zombies
-    Zombie z1,z2,z3;
+    //Zombie z1,z2,z3;
+    
+    Zombie *zombies=nullptr;
+    
+    int numZombies = 5;
+    
+    int numZombiesAlive;
     
     
     
@@ -176,9 +185,11 @@ int main()
                 arena.top=0;
                 int tileSize = createBackground(background, arena);
                 player.spawn(arena, resolution, tileSize);
-                z1.spawn(100,0,0,10);
-                z2.spawn(0,100,1,3);
-                z3.spawn(500,100,2,10);
+                //zombies[0].spawn(100,0,0,10);
+                //zombies[1].spawn(0,100,1,3);
+                //zombies[2].spawn(500,100,2,10);
+                numZombies = wave * 2; 
+                zombies = createHorde(numZombies, arena);
             }
             
         
@@ -195,7 +206,13 @@ int main()
            player.update(dtAsSeconds,mouseScreenPosition);
            spriteCrossHair.setPosition(mouseWorldPosition);
            mainView.setCenter(player.getCenter());
-           //mainView.setCenter(Vector2f(arena.width/2,arena.height/2)); //Set Arena to Center  
+           //mainView.setCenter(Vector2f(arena.width/2,arena.height/2)); //Set Arena to Center
+           Vector2f playerPosition(player.getCenter());
+           for(int i=0; i < numZombies; i++){
+              if(zombies[i].isAlive()){
+                 zombies[i].update(dtAsSeconds,playerPosition);
+              }
+           }
         }
         
         
@@ -216,9 +233,11 @@ int main()
               window.setMouseCursorVisible(false);
               window.draw(background,&textureBackground);
               window.draw(player.getSprite()); 
-              window.draw(z1.getSprite());
-              window.draw(z2.getSprite());
-              window.draw(z3.getSprite());
+              //window.draw(zombies[0].getSprite());
+              //window.draw(zombies[1].getSprite());
+              for(int i = 0; i < numZombies; i++){
+              window.draw(zombies[i].getSprite());
+              }
               window.draw(spriteCrossHair);  
             }
         if(state==State::GAME_OVER){
@@ -240,6 +259,7 @@ int main()
     return 0;
   }
   
+  // Game Functions
   
   
   int createBackground(VertexArray& rVA, IntRect arena){ //rVA -> alias - original arr-> background  || First param -> reference
@@ -282,3 +302,45 @@ int main()
    }
    return TILE_SIZE;
    } // End of function
+   
+   
+   Zombie *createHorde(int numZombies, IntRect arena){
+   
+   Zombie *zombies = new Zombie[numZombies];
+   int maxX = arena.width - 20;
+   int maxY = arena.height - 20;
+   int minX = arena.left + 20;
+   int minY = arena.top + 20;
+   
+   for(int i = 0; i < numZombies; i++){
+       srand((int)time(0)*i);
+       int side = (rand()%4);
+       float x,y;
+       switch(side){
+           case 0:
+              x = minX;
+              y = (rand()%maxY-minY)+minY;
+              break;
+           case 1:
+              x = minX;
+              y = (rand()%maxY-minY)+minY;
+              break;
+           case 2:
+              y = minY;
+              x = (rand()%maxX-minX)+minX;
+              break;
+           case 3:
+              y = minY;
+              x = (rand()%maxX-minX)+minX;
+              break;   
+        }
+        srand((int)time(0)*i*2);
+        int type = (rand()%3);
+        zombies[i].spawn(x,y,type,i);
+    }
+    return zombies;
+ }
+   
+ 
+ 
+ 
